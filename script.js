@@ -262,7 +262,7 @@ console.table(decodedBoundary);
 ===================================================== */
 
 const userIcon = L.icon({
-  iconUrl: 'https://static.vecteezy.com/system/resources/thumbnails/029/166/580/small/icon-location-map-ai-generative-png.png',
+  iconUrl: 'https://cdn.pixabay.com/animation/2023/04/06/16/10/16-10-43-442_512.gif',
   iconSize: [42, 42],
   iconAnchor: [21, 42]
 });
