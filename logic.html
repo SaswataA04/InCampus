@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <!-- =====================================================
+         1. DOCUMENT CONFIGURATION
+    ====================================================== -->
+
+    <!-- Defines the character encoding as UTF-8.
+         Supports standard English characters and symbols. -->
+    <meta charset="UTF-8">
+
+    <!-- Makes the webpage responsive on mobile devices.
+         The viewport width matches the device screen width. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Title displayed in the browser tab. -->
+    <title>Campus GPS - Kalman Filter + Full Plus Codes</title>
+
+
+    <!-- =====================================================
+         2. LEAFLET CSS LIBRARY
+    ====================================================== -->
+
+    <!--
+        Leaflet is an open-source JavaScript mapping library.
+
+        It provides:
+        - Interactive maps
+        - Geographical markers
+        - Polygons and circles
+        - Zooming and panning
+        - Tooltips and popups
+
+        We load Leaflet version 1.9.4 from a CDN.
+    -->
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+
+    <!-- =====================================================
+         3. EXTERNAL CSS FILE
+    ====================================================== -->
+
+    <!--
+        Connects our separate CSS file.
+
+        All visual styling is maintained in style.css.
+
+        Keeping CSS separate makes the project easier
+        to maintain and modify.
+    -->
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+
+    <!-- =====================================================
+         4. MAP CONTAINER
+    ====================================================== -->
+
+    <!--
+        Leaflet will render the complete interactive map
+        inside this HTML element.
+
+        JavaScript identifies this container using its ID:
+        "map".
+
+        The map will contain:
+        - OpenStreetMap tiles
+        - Campus boundary polygon
+        - Individual boundary markers
+        - User GPS marker
+        - GPS accuracy circle
+    -->
+
+    <div id="map"></div>
+
+
+
+    <!-- =====================================================
+         5. GPS INFORMATION PANEL
+    ====================================================== -->
+
+    <!--
+        This panel displays real-time information
+        about the GPS tracking process.
+
+        JavaScript updates these elements whenever
+        new GPS coordinates are received.
+    -->
+
+    <div class="info">
+
+        <!-- Panel heading. -->
+        <strong>Campus GPS Tracker</strong>
+
+        <!-- Displays GPS accuracy in metres. -->
+        <div id="gpsAccuracy">
+            Accuracy: Waiting...
+        </div>
+
+        <!-- Displays the filtered latitude and longitude. -->
+        <div id="coordinates">
+            Coordinates: Waiting...
+        </div>
+
+        <!-- Displays the number of campus boundary points. -->
+        <div id="boundaryCount">
+            Boundary: Loading...
+        </div>
+
+        <!-- Indicates whether Kalman filtering is active. -->
+        <div id="filterStatus">
+            Kalman: Active
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         6. GPS STATUS DISPLAY
+    ====================================================== -->
+
+    <!--
+        This status box appears at the bottom of the screen.
+
+        Initially, it displays "Waiting for GPS...".
+
+        JavaScript dynamically changes:
+        - The status message.
+        - The background colour.
+
+        Possible statuses:
+
+        INSIDE CAMPUS  -> Green
+        OUTSIDE CAMPUS -> Red
+        GPS ERROR      -> Red
+    -->
+
+    <div id="status" class="status">
+        Waiting for GPS...
+    </div>
+
+
+
+    <!-- =====================================================
+         7. LEAFLET JAVASCRIPT LIBRARY
+    ====================================================== -->
+
+    <!--
+        Loads Leaflet's JavaScript functionality.
+
+        This must be loaded before our custom script.js
+        because our application uses the Leaflet object "L".
+    -->
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+
+
+    <!-- =====================================================
+         8. EXTERNAL JAVASCRIPT FILE
+    ====================================================== -->
+
+    <!--
+        Connects the main application logic.
+
+        script.js handles:
+
+        1. Map initialization.
+        2. Plus Code decoding.
+        3. Campus boundary construction.
+        4. GPS marker creation.
+        5. Kalman filtering.
+        6. Point-in-polygon detection.
+        7. Live GPS tracking.
+        8. Status updates and error handling.
+
+        IMPORTANT:
+
+        This script is placed after the HTML elements
+        and Leaflet library so that all required elements
+        and dependencies are available when it executes.
+    -->
+
+    <script src="script.js"></script>
+
+
+</body>
+</html>

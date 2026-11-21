@@ -1,0 +1,284 @@
+
+/* =========================================================
+   CAMPUS GPS TRACKER
+   FILE: style.css
+
+   PURPOSE:
+   Contains all visual styling for the application.
+
+   Sections:
+   1. Global page styling
+   2. Map container
+   3. GPS status indicator
+   4. Information panel
+   5. Leaflet marker styling
+========================================================= */
+
+
+/* =========================================================
+   1. GLOBAL PAGE STYLING
+========================================================= */
+
+/*
+   html and body occupy the entire browser window.
+
+   height: 100%
+   Makes the page occupy the complete available height.
+
+   width: 100%
+   Makes the page occupy the complete available width.
+
+   margin: 0 and padding: 0
+   Remove the browser's default spacing.
+
+   font-family
+   Sets Arial as the default font for the application.
+*/
+
+html,
+body {
+
+    height: 100%;
+
+    width: 100%;
+
+    margin: 0;
+
+    padding: 0;
+
+    font-family: Arial, sans-serif;
+
+}
+
+
+/* =========================================================
+   2. MAP CONTAINER
+========================================================= */
+
+/*
+   The map container occupies the entire screen.
+
+   Leaflet uses the HTML element with ID "map"
+   to render the interactive geographical map.
+
+   All geographical layers are displayed inside it:
+   - OpenStreetMap tiles
+   - Campus polygon
+   - Boundary markers
+   - User GPS marker
+   - GPS accuracy circle
+*/
+
+#map {
+
+    height: 100%;
+
+    width: 100%;
+
+}
+
+
+/* =========================================================
+   3. GPS STATUS INDICATOR
+========================================================= */
+
+/*
+   The status box is positioned at the bottom centre
+   of the screen.
+
+   It dynamically displays the current GPS status.
+
+   Examples:
+
+   INSIDE CAMPUS | ±8m
+   OUTSIDE CAMPUS | ±12m
+   GPS PERMISSION DENIED
+   WAITING FOR GPS
+*/
+
+.status {
+
+    /*
+       fixed positioning keeps the status box in the
+       same screen position even when the map is moved.
+    */
+
+    position: fixed;
+
+
+    /* Position the element near the bottom edge. */
+
+    bottom: 20px;
+
+
+    /*
+       left: 50% places the left edge at the screen centre.
+
+       translateX(-50%) shifts the element left by half
+       its own width.
+
+       Together, these centre the status box.
+    */
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+
+    /* Status box appearance. */
+
+    background: #020617;
+
+    color: white;
+
+    padding: 12px 18px;
+
+    border-radius: 10px;
+
+
+    /* Text appearance. */
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+
+    /*
+       z-index ensures that the status box appears
+       above the Leaflet map and its geographical layers.
+    */
+
+    z-index: 9999;
+
+
+    /*
+       Prevents the status message from wrapping
+       into multiple lines.
+    */
+
+    white-space: nowrap;
+
+
+    /* Adds a subtle shadow for visual separation. */
+
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+
+}
+
+
+/* =========================================================
+   4. GPS INFORMATION PANEL
+========================================================= */
+
+/*
+   This panel appears in the upper-left corner.
+
+   It displays:
+
+   - Campus GPS Tracker heading
+   - GPS accuracy
+   - Current filtered coordinates
+   - Number of boundary points
+   - Kalman filter status
+
+   JavaScript updates the content dynamically.
+*/
+
+.info {
+
+    /* Keep the information panel fixed on the screen. */
+
+    position: fixed;
+
+
+    /* Position it in the upper-left corner. */
+
+    top: 15px;
+
+    left: 15px;
+
+
+    /*
+       Slightly transparent dark background.
+
+       rgba format:
+
+       R = Red
+       G = Green
+       B = Blue
+       A = Alpha (transparency)
+
+       Alpha = 0.92 means the background is
+       almost completely opaque.
+    */
+
+    background: rgba(2, 6, 23, 0.92);
+
+
+    /* Text colour and spacing. */
+
+    color: white;
+
+    padding: 14px;
+
+    border-radius: 10px;
+
+
+    /* Ensure the panel appears above the map. */
+
+    z-index: 9999;
+
+
+    /* Text formatting. */
+
+    font-size: 13px;
+
+    line-height: 1.7;
+
+
+    /* Prevent the information panel from becoming too wide. */
+
+    max-width: 230px;
+
+}
+
+
+/* =========================================================
+   5. INFORMATION PANEL HEADING
+========================================================= */
+
+/*
+   The strong element contains the panel heading.
+
+   A blue colour distinguishes the heading from
+   the other information displayed in the panel.
+*/
+
+.info strong {
+
+    color: #60a5fa;
+
+}
+
+
+/* =========================================================
+   6. LEAFLET MARKER STYLING
+========================================================= */
+
+/*
+   Applies a shadow to Leaflet marker icons.
+
+   drop-shadow() creates a shadow following the
+   visible shape of the marker image.
+
+   This improves the marker's visibility against
+   different map backgrounds.
+*/
+
+.leaflet-marker-icon {
+
+    filter: drop-shadow(
+        0 2px 4px rgba(0, 0, 0, 0.3)
+    );
+
+}
