@@ -1,4 +1,38 @@
 /* =====================================================
+   0. SHOW ANY ERROR ON SCREEN
+===================================================== */
+
+window.addEventListener('error', function (event) {
+  const el = document.getElementById('status');
+  if (el) {
+    el.innerText = 'ERROR: ' + event.message;
+    el.style.background = '#991b1b';
+  }
+});
+
+if (typeof L === 'undefined') {
+  const el = document.getElementById('status');
+  el.innerText = 'LEAFLET FAILED TO LOAD (check internet / unpkg.com)';
+  el.style.background = '#991b1b';
+  throw new Error('Leaflet not loaded');
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =====================================================
    1. MAP INITIALIZATION
 ===================================================== */
 
