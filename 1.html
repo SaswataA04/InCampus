@@ -1,152 +1,719 @@
+
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Campus GPS – Kalman Stage</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Campus GPS - Kalman Filter + Plus Codes</title>
+
+<!-- Leaflet CSS -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
 
 <style>
-html, body { height:100%; margin:0; }
-#map { height:100%; width:100%; }
+
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+#map {
+  height: 100%;
+  width: 100%;
+}
+
+/* GPS STATUS */
+
 .status {
   position: fixed;
-  bottom: 12px;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
+
   background: #020617;
-  color: #e5e7eb;
-  padding: 8px 14px;
-  border-radius: 8px;
+  color: white;
+
+  padding: 12px 18px;
+  border-radius: 10px;
+
   font-size: 14px;
-  z-index: 999;
+  font-weight: bold;
+
+  z-index: 9999;
+  white-space: nowrap;
+
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
+
+/* INFORMATION PANEL */
+
+.info {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+
+  background: rgba(2, 6, 23, 0.92);
+  color: white;
+
+  padding: 14px;
+  border-radius: 10px;
+
+  z-index: 9999;
+  font-size: 13px;
+  line-height: 1.7;
+
+  max-width: 230px;
+}
+
+.info strong {
+  color: #60a5fa;
+}
+
+/* GPS MARKER */
+
+.leaflet-marker-icon {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
 </style>
+
 </head>
 
 <body>
 
+<!-- MAP -->
+
 <div id="map"></div>
-<div id="status" class="status">Waiting for GPS…</div>
+
+<!-- INFORMATION PANEL -->
+
+<div class="info">
+
+  <strong>Campus GPS Tracker</strong>
+
+  <div id="gpsAccuracy">Accuracy: Waiting...</div>
+
+  <div id="coordinates">Coordinates: Waiting...</div>
+
+  <div id="boundaryCount">Boundary: Loading...</div>
+
+  <div id="filterStatus">Kalman: Active</div>
+
+</div>
+
+<!-- STATUS -->
+
+<div id="status" class="status">
+  Waiting for GPS...
+</div>
+
+
+<!-- LEAFLET -->
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<script>
-/* =========================
-   MAP
-========================= */
-const map = L.map('map').setView([22.7378, 88.4565], 17);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 20
-}).addTo(map);
+<!-- OPEN LOCATION CODE LIBRARY -->
 
-/* =========================
-   CAMPUS BOUNDARY
-========================= */
-const campusBoundary = [/* same coordinates as before */ 
-[22.741120202296916,88.45690791649396],[22.740499303078757,88.45681672138558],
-[22.739783194572578,88.4567866412132],[22.739523443370576,88.45676496920235],
-[22.73899541415657,88.4567733887531],[22.738915174246582,88.45627663479418],
-[22.738920351021616,88.45553571362238],[22.738689984570897,88.45492108583082],
-[22.738151598531363,88.45498282926397],[22.737571795834103,88.45503895965483],
-[22.737466576918642,88.45483592288132],[22.737198269150227,88.45469046494297],
-[22.736900614603584,88.45448136915662],[22.73673363926558,88.45441131631574],
-[22.736539347989016,88.45444331553794],[22.736340137659298,88.4545153137879],
-[22.736332759493365,88.4545259801953],[22.736155683391484,88.45461664465822],
-[22.736086820386454,88.45482730621198],[22.736072064026843,88.45512596561923],
-[22.735941716114485,88.45524329610065],[22.73582858386341,88.45543529143387],
-[22.735762157577334,88.45560242128292],[22.735656209615268,88.45560954525057],
-[22.735596254533178,88.45540027872644],[22.735520484212014,88.45526540588254],
-[22.73542898316012,88.45507865811481],[22.73525853986098,88.45506893166856],
-[22.735256745719855,88.45537434208038],[22.735223236122945,88.45581753443597],
-[22.735189147428816,88.45601789922841],[22.73499179166422,88.45606458617036],
-[22.73481596537944,88.45626689625206],[22.734841657596974,88.45655170734858],
-[22.734913861647236,88.45662129551873],[22.734937929655526,88.45683006002926],
-[22.735102283182158,88.4571718495219],[22.735276609586926,88.45723549659064],
-[22.735299734501456,88.4575730189249],[22.73560391571004,88.457877753384],
-[22.7358707407706,88.45785846639347],[22.735885303182087,88.45744956358378],
-[22.736382093974008,88.45725369210042],[22.736478871190936,88.45779583638475],
-[22.73679178372355,88.45806515967436],[22.737396279715057,88.45812500127208],
-[22.737596853237477,88.45818752518483],[22.7377297330489,88.45799179815377],
-[22.738997130824714,88.45806664284589],[22.73928317337472,88.45819990577928],
-[22.73932105084655,88.45843932475972],[22.739627738300324,88.4583791562397],
-[22.739709701640496,88.45799890012536],[22.7401995784625,88.4579279067385],
-[22.74040679195038,88.4575951121844],[22.740424230382697,88.45750804699014],
-[22.740541185066796,88.45735533625538],[22.740859192824054,88.45707452929918],
-[22.741120202296916,88.45690791649396]
+<script src="https://unpkg.com/open-location-code@1.0.3/openlocationcode.js"></script>
+
+
+<script>
+
+/* =====================================================
+   1. MAP INITIALIZATION
+===================================================== */
+
+const referenceLat = 22.7378;
+const referenceLng = 88.4565;
+
+const map = L.map('map').setView(
+  [referenceLat, referenceLng],
+  17
+);
+
+L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {
+    maxZoom: 20,
+    attribution: '&copy; OpenStreetMap contributors'
+  }
+).addTo(map);
+
+
+/* =====================================================
+   2. CAMPUS BOUNDARY - PLUS CODES
+===================================================== */
+
+// Short Plus Codes supplied for the campus boundary.
+// Their order is preserved.
+// Repeated closing point and consecutive duplicate removed.
+
+const campusBoundaryPlusCodes = [
+
+  "PFR4+7X7",
+  "PFR4+8V9",
+  "PFR4+9RM",
+  "PFR4+CPQ",
+  "PFR4+9PF",
+  "PFR4+8PF",
+  "PFR4+7PF",
+  "PFR4+6PF",
+  "PFR4+5P7",
+  "PFR4+3P3",
+  "PFR4+2P2",
+
+  "PFQ4+WP2",
+  "PFQ4+RPR",
+  "PFQ4+QPJ",
+  "PFQ4+MPR",
+  "PFQ4+HMP",
+  "PFQ4+HJH",
+  "PFQ4+HHG",
+  "PFQ4+HFH",
+  "PFQ4+HCF",
+  "PFQ4+H6H",
+  "PFQ4+H3J",
+  "PFQ4+P29",
+  "PFQ4+R2H",
+
+  "PFQ3+WXW",
+  "PFQ3+QRQ",
+  "PFQ3+PRH",
+  "PFQ3+MMH",
+  "PFQ3+JG6",
+  "PFQ3+H72",
+  "PFQ3+J6R",
+  "PFQ3+J52",
+  "PFQ3+C66",
+  "PFQ3+768",
+  "PFQ3+38R",
+  "PFQ3+2CX",
+
+  "PFP3+VF9",
+  "PFP3+PHX",
+  "PFP3+MGC",
+  "PFP3+HF9",
+  "PFP3+FF4",
+  "PFP3+CH4",
+  "PFP3+CQF",
+  "PFP3+CW5",
+
+  "PFP4+93P",
+  "PFP4+84G",
+  "PFP4+868",
+  "PFP4+66W",
+  "PFP4+65J",
+  "PFP4+52R",
+  "PFP4+32F",
+  "PFP4+38R",
+  "PFP4+388",
+
+  "PFM4+XCG",
+  "PFM4+WF2",
+  "PFM4+WJM",
+  "PFM4+XRJ",
+
+  "PFP4+3X8",
+  "PFP5+54H",
+  "PFP5+84Q",
+  "PFP4+HXQ",
+
+  "PFP5+P6H",
+  "PFP5+W6Q",
+
+  "PFQ5+27V",
+  "PFQ5+77F",
+  "PFQ5+H6X",
+  "PFQ5+P65",
+  "PFQ5+P9F",
+
+  "PFR5+283",
+  "PFR5+53C"
+
 ];
 
-L.polygon(campusBoundary,{
-  color:'#1e3a8a',
-  weight:3,
-  fillOpacity:0.15
-}).addTo(map);
 
-/* =========================
-   MARKER
-========================= */
-const userIcon = L.icon({
-  iconUrl:'https://static.vecteezy.com/system/resources/thumbnails/029/166/580/small/icon-location-map-ai-generative-png.png',
-  iconSize:[42,42],
-  iconAnchor:[21,42]
-});
+/* =====================================================
+   3. CONVERT PLUS CODES TO LATITUDE AND LONGITUDE
+===================================================== */
 
-const userMarker = L.marker([22.7378,88.4565],{icon:userIcon}).addTo(map);
+function convertPlusCodes(codes) {
 
-/* =========================
-   KALMAN FILTER (SAFE)
-========================= */
-class Kalman1D {
-  constructor(r=0.00001, q=0.0003) {
-    this.r = r;
-    this.q = q;
-    this.p = 1;
-    this.x = null;
-  }
-  filter(z) {
-    if (this.x === null) {
-      this.x = z;
-      return z;
+  return codes.map((code, index) => {
+
+    try {
+
+      const fullCode = OpenLocationCode.recoverNearest(
+        code,
+        referenceLat,
+        referenceLng
+      );
+
+      const decoded = OpenLocationCode.decode(fullCode);
+
+      return {
+
+        code: code,
+
+        fullCode: fullCode,
+
+        lat: decoded.latitudeCenter,
+
+        lng: decoded.longitudeCenter,
+
+        index: index + 1
+
+      };
+
+    } catch (error) {
+
+      console.error(
+        "Plus Code conversion failed:",
+        code,
+        error
+      );
+
+      throw error;
+
     }
-    this.p += this.q;
-    const k = this.p / (this.p + this.r);
-    this.x += k * (z - this.x);
-    this.p *= (1 - k);
-    return this.x;
-  }
+
+  });
+
 }
 
-const kLat = new Kalman1D();
-const kLng = new Kalman1D();
+let decodedBoundary;
 
-/* =========================
-   GPS (RAW + KALMAN)
-========================= */
-navigator.geolocation.watchPosition(
-  pos => {
-    const rawLat = pos.coords.latitude;
-    const rawLng = pos.coords.longitude;
-    const acc = Math.round(pos.coords.accuracy);
+try {
 
-    const lat = kLat.filter(rawLat);
-    const lng = kLng.filter(rawLng);
+  decodedBoundary = convertPlusCodes(
+    campusBoundaryPlusCodes
+  );
 
-    userMarker.setLatLng([lat, lng]);
+} catch (error) {
 
-    document.getElementById('status').innerText =
-      `Kalman GPS | ±${acc}m`;
-  },
-  err => {
-    document.getElementById('status').innerText =
-      `GPS ERROR: ${err.message}`;
-  },
+  document.getElementById('status').innerText =
+    'BOUNDARY CONVERSION ERROR';
+
+  throw error;
+
+}
+
+
+// Leaflet requires [latitude, longitude]
+
+const campusBoundary = decodedBoundary.map(point => [
+  point.lat,
+  point.lng
+]);
+
+
+/* =====================================================
+   4. DRAW CAMPUS POLYGON
+===================================================== */
+
+const campusPolygon = L.polygon(campusBoundary, {
+
+  color: '#1e3a8a',
+
+  weight: 3,
+
+  fillColor: '#3b82f6',
+
+  fillOpacity: 0.15
+
+}).addTo(map);
+
+
+// Show boundary vertices
+
+const boundaryMarkers = L.layerGroup();
+
+decodedBoundary.forEach(point => {
+
+  L.circleMarker(
+    [point.lat, point.lng],
+    {
+
+      radius: 3,
+
+      color: '#dc2626',
+
+      fillColor: '#ef4444',
+
+      fillOpacity: 1,
+
+      weight: 1
+
+    }
+
+  )
+  .bindTooltip(
+    `Point ${point.index}: ${point.code}`
+  )
+  .addTo(boundaryMarkers);
+
+});
+
+boundaryMarkers.addTo(map);
+
+
+// Fit map to boundary
+
+map.fitBounds(
+  campusPolygon.getBounds(),
   {
-    enableHighAccuracy:true,
-    maximumAge:0,
-    timeout:15000
+    padding: [35, 35]
   }
 );
+
+
+// Boundary information
+
+document.getElementById('boundaryCount').innerText =
+  `Boundary points: ${campusBoundary.length}`;
+
+
+// Log decoded coordinates for verification
+
+console.table(decodedBoundary);
+
+
+/* =====================================================
+   5. CUSTOM GPS MARKER
+===================================================== */
+
+const userIcon = L.icon({
+
+  iconUrl:
+  'https://static.vecteezy.com/system/resources/thumbnails/029/166/580/small/icon-location-map-ai-generative-png.png',
+
+  iconSize: [42, 42],
+
+  iconAnchor: [21, 42]
+
+});
+
+
+const userMarker = L.marker(
+  [referenceLat, referenceLng],
+  {
+    icon: userIcon
+  }
+).addTo(map);
+
+
+// GPS accuracy circle
+
+const accuracyCircle = L.circle(
+  [referenceLat, referenceLng],
+  {
+
+    radius: 0,
+
+    color: '#2563eb',
+
+    fillColor: '#60a5fa',
+
+    fillOpacity: 0.12,
+
+    weight: 1
+
+  }
+).addTo(map);
+
+
+/* =====================================================
+   6. KALMAN FILTER
+===================================================== */
+
+class Kalman1D {
+
+  constructor(r = 0.00001, q = 0.0003) {
+
+    this.r = r;
+
+    this.q = q;
+
+    this.p = 1;
+
+    this.x = null;
+
+  }
+
+
+  filter(z) {
+
+    if (this.x === null) {
+
+      this.x = z;
+
+      return z;
+
+    }
+
+    this.p += this.q;
+
+    const k = this.p / (this.p + this.r);
+
+    this.x += k * (z - this.x);
+
+    this.p *= (1 - k);
+
+    return this.x;
+
+  }
+
+}
+
+
+const kLat = new Kalman1D();
+
+const kLng = new Kalman1D();
+
+
+/* =====================================================
+   7. POINT-IN-POLYGON DETECTION
+===================================================== */
+
+// Returns true when GPS point is inside the polygon.
+
+function isInsideCampus(point, polygon) {
+
+  const lat = point[0];
+
+  const lng = point[1];
+
+  let inside = false;
+
+  for (
+    let i = 0, j = polygon.length - 1;
+    i < polygon.length;
+    j = i++
+  ) {
+
+    const xi = polygon[i][1];
+
+    const yi = polygon[i][0];
+
+    const xj = polygon[j][1];
+
+    const yj = polygon[j][0];
+
+
+    const intersect =
+
+      ((yi > lat) !== (yj > lat)) &&
+
+      (
+        lng <
+        (xj - xi) * (lat - yi) / (yj - yi) + xi
+      );
+
+
+    if (intersect) {
+
+      inside = !inside;
+
+    }
+
+  }
+
+  return inside;
+
+}
+
+
+/* =====================================================
+   8. GPS STATUS
+===================================================== */
+
+const statusElement = document.getElementById('status');
+
+function updateStatus(message, color) {
+
+  statusElement.innerText = message;
+
+  statusElement.style.background = color;
+
+}
+
+
+/* =====================================================
+   9. GPS TRACKING - RAW + KALMAN
+===================================================== */
+
+if (!navigator.geolocation) {
+
+  updateStatus(
+    'GPS NOT SUPPORTED BY THIS BROWSER',
+    '#991b1b'
+  );
+
+} else {
+
+  navigator.geolocation.watchPosition(
+
+    function(position) {
+
+      // RAW GPS DATA
+
+      const rawLat = position.coords.latitude;
+
+      const rawLng = position.coords.longitude;
+
+      const accuracy = Math.round(
+        position.coords.accuracy
+      );
+
+
+      // KALMAN FILTER
+
+      const lat = kLat.filter(rawLat);
+
+      const lng = kLng.filter(rawLng);
+
+
+      // FILTERED LOCATION
+
+      const filteredPosition = [lat, lng];
+
+
+      // UPDATE MARKER
+
+      userMarker.setLatLng(filteredPosition);
+
+
+      // UPDATE ACCURACY CIRCLE
+
+      accuracyCircle.setLatLng(filteredPosition);
+
+      accuracyCircle.setRadius(accuracy);
+
+
+      // CAMPUS GEOFENCING
+
+      const inside = isInsideCampus(
+        filteredPosition,
+        campusBoundary
+      );
+
+
+      // UPDATE STATUS
+
+      if (inside) {
+
+        updateStatus(
+          `INSIDE CAMPUS | ±${accuracy}m`,
+          '#166534'
+        );
+
+      } else {
+
+        updateStatus(
+          `OUTSIDE CAMPUS | ±${accuracy}m`,
+          '#991b1b'
+        );
+
+      }
+
+
+      // UPDATE INFORMATION PANEL
+
+      document.getElementById('gpsAccuracy').innerText =
+        `Accuracy: ±${accuracy} metres`;
+
+      document.getElementById('coordinates').innerText =
+        `Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
+      document.getElementById('filterStatus').innerText =
+        'Kalman: Active';
+
+
+      console.log({
+
+        rawLatitude: rawLat,
+
+        rawLongitude: rawLng,
+
+        filteredLatitude: lat,
+
+        filteredLongitude: lng,
+
+        accuracy: accuracy,
+
+        campusStatus: inside ? 'INSIDE' : 'OUTSIDE'
+
+      });
+
+    },
+
+
+    // GPS ERROR HANDLING
+
+    function(error) {
+
+      let message = '';
+
+      switch (error.code) {
+
+        case error.PERMISSION_DENIED:
+
+          message = 'GPS PERMISSION DENIED';
+
+          break;
+
+        case error.POSITION_UNAVAILABLE:
+
+          message = 'GPS POSITION UNAVAILABLE';
+
+          break;
+
+        case error.TIMEOUT:
+
+          message = 'GPS REQUEST TIMEOUT';
+
+          break;
+
+        default:
+
+          message = 'UNKNOWN GPS ERROR';
+
+      }
+
+
+      updateStatus(
+        message,
+        '#991b1b'
+      );
+
+      console.error(error);
+
+    },
+
+
+    // GPS OPTIONS
+
+    {
+
+      enableHighAccuracy: true,
+
+      maximumAge: 0,
+
+      timeout: 15000
+
+    }
+
+  );
+
+}
+
 </script>
 
 </body>
